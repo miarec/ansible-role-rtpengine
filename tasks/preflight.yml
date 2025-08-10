@@ -7,21 +7,18 @@
     - "../vars/{{ ansible_os_family }}.yml"
 
 - name: Check if unattended-upgrades is installed
-  stat:
-    path: /etc/apt/apt.conf.d/50unattended-upgrades
-  register: unattended_upgrades
+  service_facts:
 
 - name: Stop unattended-upgrades
   service:
     name: unattended-upgrades
     state: stopped
-  when: unattended_upgrades.stat.exists
+  when: "'unattended-upgrades' in services"
 
 - name: Delete unattended-upgrades
   apt:
     name: unattended-upgrades
     state: absent
-  when: unattended_upgrades.stat.exists
   notify: reload systemd
 
 - name: Add rtpengine group
