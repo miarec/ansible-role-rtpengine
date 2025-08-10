@@ -56,3 +56,8 @@
   service:
     name: "{{ rtpengine_service_name }}"
     enabled: true
+
+- name: Start rtpengine service
+  service:
+    name: "{{ rtpengine_service_name }}"
+    state: started
