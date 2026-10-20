@@ -61,7 +61,7 @@ docker exec "$container" sh -c '
   truncate -s 0 /var/log/rtpengine/rtpengine.log
   DEBIAN_FRONTEND=noninteractive apt-get purge --yes --auto-remove pandoc dkms
   apt-get clean
-  rm -rf /root/.ansible
+  rm -rf /root/.ansible /var/log/journal/*
   /opt/rtpengine/usr/bin/rtpengine --version
 '
 docker stop "$container"
