@@ -1,0 +1,32 @@
+---
+- name: Converge
+  ansible.builtin.import_playbook: ../default/converge.yml
+
+- name: Check that the role used the binaries from the image
+  hosts: all
+  gather_facts: false
+  vars:
+    # The role's defaults are not visible in this play.
+    rtpengine_binary: /opt/rtpengine/usr/bin/rtpengine
+
+  tasks:
+    - name: Assert that the role skipped the build from source
+      assert:
+        that:
+          - rtpengine_exists.rc == 0
+          - not (rtpengine_force_install | default(false) | bool)
+        fail_msg: The image has no {{ rtpengine_binary }}, so the role built RTPEngine from source.
+        success_msg: The role found {{ rtpengine_binary }} in the image and skipped the build.
+
+    # rtpengine prints the version to stderr.
+    - name: Get the RTPEngine version
+      command: "{{ rtpengine_binary }} --version"
+      register: _rtpengine_version_output
+      changed_when: false
+
+    - name: Assert that the image holds the expected RTPEngine version
+      assert:
+        that:
+          - (_rtpengine_version_output.stdout ~ _rtpengine_version_output.stderr) is search('~mr' ~ (rtpengine_version | regex_escape) ~ '(\s|$)')
+        fail_msg: Expected RTPEngine {{ rtpengine_version }}, the image has {{ _rtpengine_version_output.stderr }}.
+        success_msg: The image holds RTPEngine {{ rtpengine_version }}.

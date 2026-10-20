@@ -4,33 +4,31 @@
   become: true
 
   pre_tasks:
-    - set_fact:
+    - name: Set the RTPEngine version from the environment
+      set_fact:
         rtpengine_version: "{{ lookup('env', 'RTPENGINE_VERSION') }}"
 
-    - name: Install prerequisites
-      block:
-        - name: Update apt cache
-          when: ansible_os_family == "Debian"
-          apt:
-            update_cache: true
-            cache_valid_time: 600
-          changed_when: false
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 600
+      changed_when: false
+      when: ansible_facts['os_family'] == "Debian"
 
-        - name: Install Dependencies
-          package:
-            name: "{{ item }}"
-            state: present
-          with_items:
-            - rsyslog
-            - nftables
+    - name: Install rsyslog and nftables
+      package:
+        name:
+          - rsyslog
+          - nftables
+        state: present
 
-        - name: Start and Enable nftables service
-          systemd:
-            name: nftables
-            enabled: true
-            state: started
+    - name: Start and enable nftables
+      systemd:
+        name: nftables
+        enabled: true
+        state: started
 
   roles:
-    - role: ansible-role-rtpengine
+    - role: "{{ playbook_dir }}/../.."  # noqa: role-name[path]
       tags:
         - rtpengine

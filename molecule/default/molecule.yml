@@ -1,12 +1,13 @@
 ---
+# Don't symlink the role into ~/.ansible/roles. The converge loads the role by
+# path, and the symlink step fails when scenarios run in parallel.
+prerun: false
 dependency:
   name: galaxy
-
 driver:
   name: docker
-
 platforms:
-  - name: instance
+  - name: rtpengine-${MOLECULE_DISTRO:-ubuntu2404}
     image: ghcr.io/miarec/${MOLECULE_DISTRO:-ubuntu2404}-systemd:latest
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
@@ -20,8 +21,8 @@ provisioner:
   playbooks:
     converge: ${MOLECULE_PLAYBOOK:-converge.yml}
   env:
-    RTPENGINE_VERSION: ${MOLECULE_RTPENGINE_VERSION:-'12.5.1.4'}
     ANSIBLE_VERBOSITY: ${MOLECULE_ANSIBLE_VERBOSITY:-0}
+    RTPENGINE_VERSION: ${MOLECULE_RTPENGINE_VERSION:-12.5.1.5}
 
 verifier:
   name: testinfra

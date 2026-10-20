@@ -1,0 +1,155 @@
+---
+# Builds the RTPEngine test images (ghcr.io/miarec/rtpengine:VERSION-DISTRO)
+# with the role's own install tasks. See "Test images" in README.md.
+name: Test images
+"on":
+  pull_request:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+    inputs:
+      rtpengine_version:
+        description: >-
+          RTPEngine version to build, for example 12.5.1.5. Leave empty to build
+          the versions in image/versions.json.
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Push only from master: on pushes and on manual runs. Pull requests and
+  # manual runs on other branches only build and test.
+  PUSH: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master' }}
+
+jobs:
+  matrix:
+    name: Read versions
+    runs-on: ubuntu-24.04
+    outputs:
+      rtpengine_versions: ${{ steps.versions.outputs.rtpengine_versions }}
+      distros: ${{ steps.versions.outputs.distros }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Read image/versions.json
+        id: versions
+        env:
+          INPUT_VERSION: ${{ inputs.rtpengine_version }}
+        run: |
+          if [[ -n "$INPUT_VERSION" ]]; then
+            if [[ ! "$INPUT_VERSION" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
+              echo "::error::rtpengine_version must look like 12.5.1.5, got '$INPUT_VERSION'"
+              exit 1
+            fi
+            versions=$(jq -cn --arg v "$INPUT_VERSION" '[$v]')
+          else
+            versions=$(jq -c .rtpengine_versions image/versions.json)
+          fi
+          echo "rtpengine_versions=$versions" >> "$GITHUB_OUTPUT"
+          echo "distros=$(jq -c .distros image/versions.json)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: build (${{ matrix.rtpengine_version }}, ${{ matrix.distro }}, ${{ matrix.arch }})
+    needs: matrix
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        rtpengine_version: ${{ fromJSON(needs.matrix.outputs.rtpengine_versions) }}
+        distro: ${{ fromJSON(needs.matrix.outputs.distros) }}
+        arch:
+          - amd64
+          - arm64
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      TAG: ghcr.io/${{ github.repository_owner }}/rtpengine:${{ matrix.rtpengine_version }}-${{ matrix.distro }}-${{ matrix.arch }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Build image
+        run: image/build.sh "$RTPENGINE_VERSION" "$DISTRO" "$TAG"
+        env:
+          RTPENGINE_VERSION: ${{ matrix.rtpengine_version }}
+          DISTRO: ${{ matrix.distro }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          IMAGE_REVISION: ${{ github.sha }}
+
+      # Runs the role against a container from the image: the role must skip
+      # the build, configure RTPEngine, and start it. The scenario uses the tag
+      # without the architecture, so tag the new image with it on this runner.
+      - name: Smoke test image
+        run: |
+          docker tag "$TAG" "${TAG%-*}"
+          uv run molecule test -s image
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_RTPENGINE_VERSION: ${{ matrix.rtpengine_version }}
+
+      - name: Log in to GitHub Container Registry
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        if: env.PUSH == 'true'
+        run: docker push "$TAG"
+
+  manifest:
+    name: manifest (${{ matrix.rtpengine_version }}, ${{ matrix.distro }})
+    needs:
+      - matrix
+      - build
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        rtpengine_version: ${{ fromJSON(needs.matrix.outputs.rtpengine_versions) }}
+        distro: ${{ fromJSON(needs.matrix.outputs.distros) }}
+    env:
+      TAG: ghcr.io/${{ github.repository_owner }}/rtpengine:${{ matrix.rtpengine_version }}-${{ matrix.distro }}
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push the multi-arch manifest
+        run: |
+          docker buildx imagetools create --tag "$TAG" "$TAG-amd64" "$TAG-arm64"
+          docker buildx imagetools inspect "$TAG"

@@ -23,7 +23,7 @@
     clone: true
 
 - name: Compile rtpengine daemon
-  shell: umask 0022 && make -j{{ ansible_processor_cores | default(1) + 1 }} DESTDIR={{ rtpengine_install_dir }}
+  shell: umask 0022 && make -j{{ ansible_facts['processor_cores'] | default(1) + 1 }} DESTDIR={{ rtpengine_install_dir }}
   environment:
     with_transcoding: "no"
     with_iptables_option: "no"
@@ -49,7 +49,7 @@
   when: rtpengine_use_kernel_module|bool
 
 - name: Compile rtpengine kernel-module
-  shell: umask 0022 && make -j{{ ansible_processor_cores | default(1) + 1 }}
+  shell: umask 0022 && make -j{{ ansible_facts['processor_cores'] | default(1) + 1 }}
   args:
     chdir: "{{ rtpengine_download_dir }}/rtpengine-{{ rtpengine_version }}/kernel-module"
     creates: "{{ rtpengine_download_dir }}/rtpengine-{{ rtpengine_version }}/kernel-module/xt_RTPENGINE.ko"
