@@ -197,8 +197,15 @@ in production: production hosts build RTPEngine with the role.
 
 - On pull requests, it builds and smoke-tests the images, but does not push them.
 - On pushes to `master`, it builds, smoke-tests, and pushes the images.
-- When run manually (`workflow_dispatch`), it builds and pushes the versions in
-  `image/versions.json`, or only the version in the `rtpengine_version` input.
+- When run manually (`workflow_dispatch`) on `master`, it builds and pushes the
+  versions in `image/versions.json`, or only the version in the
+  `rtpengine_version` input. A manual run on another branch only builds and
+  smoke-tests.
+
+The first push creates the GHCR package `miarec/rtpengine`. GHCR makes a new
+package private, so an organization owner must make it public once (package
+settings, "Change visibility"). After that, anyone can pull the images without
+logging in.
 
 To add a version, add it to `image/versions.json` and merge the change to `master`.
 To build a version once without changing the file:
