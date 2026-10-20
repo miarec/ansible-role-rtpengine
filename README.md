@@ -151,7 +151,6 @@ Molecule variables:
 | `MOLECULE_DISTRO`            | `ubuntu2404` | Container OS: `ubuntu2204` or `ubuntu2404`   |
 | `MOLECULE_RTPENGINE_VERSION` | `12.5.1.5`   | Value of `rtpengine_version`                 |
 | `MOLECULE_ANSIBLE_VERBOSITY` | `0`          | Ansible verbosity, 0-3 (same as `-v`-`-vvv`) |
-| `MOLECULE_IMAGE`             |              | Image to test in the `image` scenario        |
 
 # Test images
 
@@ -185,8 +184,9 @@ platforms:
 ```
 
 The image contains the RTPEngine binaries, the `rtpengine` user and group, the build
-dependencies (without `pandoc`, `dkms`, and the kernel headers), `rsyslog`, and
-`nftables`. The `rtpengine` service is not installed until the role runs. The image
+dependencies, `rsyslog`, and `nftables`. The build removes `pandoc`, `dkms`, the
+kernel headers, and their dependencies that nothing else needs, such as `kmod`
+(about 260-330 MB), because only the build uses them. The `rtpengine` service is not installed until the role runs. The image
 has no kernel module: RTPEngine forwards media in user space. Do not use the images
 in production: production hosts build RTPEngine with the role.
 
@@ -202,10 +202,9 @@ in production: production hosts build RTPEngine with the role.
   `rtpengine_version` input. A manual run on another branch only builds and
   smoke-tests.
 
-The first push creates the GHCR package `miarec/rtpengine`. GHCR makes a new
-package private, so an organization owner must make it public once (package
-settings, "Change visibility"). After that, anyone can pull the images without
-logging in.
+The first push creates the GHCR package `miarec/rtpengine`. After the first push,
+check that the package is public in its settings, and change its visibility if it
+isn't. Public images can be pulled without logging in.
 
 To add a version, add it to `image/versions.json` and merge the change to `master`.
 To build a version once without changing the file:
@@ -220,11 +219,13 @@ gh workflow run image.yml -f rtpengine_version=12.5.1.6
 converge playbook (`molecule/default/converge.yml`) in it, removes the `rtpengine`
 service unit and the build-only packages, and commits the container for the
 architecture of your Docker host. The `image` Molecule scenario runs the role
-against a container from the new image. It fails if the role builds RTPEngine
-again, if the image holds another RTPEngine version, or if the service does not
-start.
+against a container from `ghcr.io/miarec/rtpengine:<version>-<distribution>`,
+where `MOLECULE_RTPENGINE_VERSION` and `MOLECULE_DISTRO` set the version and the
+distribution. It fails if the role builds RTPEngine again, if the image holds
+another RTPEngine version, or if the service does not start. If no local image has
+the tag, Docker pulls the published image.
 
 ```bash
 image/build.sh 12.5.1.5 ubuntu2404 ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404
-MOLECULE_IMAGE=ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404 uv run molecule test -s image
+MOLECULE_RTPENGINE_VERSION=12.5.1.5 MOLECULE_DISTRO=ubuntu2404 uv run molecule test -s image
 ```

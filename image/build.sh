@@ -50,8 +50,9 @@ echo "Role converge from scratch took $(($(date +%s) - start)) s"
 # The role configures and starts RTPEngine for 127.0.0.1. Remove the unit so
 # that the role creates it again, as on a new host, when it configures a
 # container from the image. Pandoc (documentation) and dkms with the kernel
-# headers (kernel module) are needed only to build; together they take about
-# 300 MB.
+# headers (kernel module) are needed only to build. The purge also removes
+# their dependencies that nothing else needs, such as kmod; together they take
+# about 260-330 MB.
 echo "Removing the service configuration and build-only packages"
 docker exec "$container" sh -c '
   set -e
