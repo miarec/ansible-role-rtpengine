@@ -99,13 +99,15 @@ jobs:
           IMAGE_REVISION: ${{ github.sha }}
 
       # Runs the role against a container from the image: the role must skip
-      # the build, configure RTPEngine, and start it.
+      # the build, configure RTPEngine, and start it. The scenario uses the tag
+      # without the architecture, so tag the new image with it on this runner.
       - name: Smoke test image
-        run: uv run molecule test -s image
+        run: |
+          docker tag "$TAG" "${TAG%-*}"
+          uv run molecule test -s image
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          MOLECULE_IMAGE: ${{ env.TAG }}
           MOLECULE_DISTRO: ${{ matrix.distro }}
           MOLECULE_RTPENGINE_VERSION: ${{ matrix.rtpengine_version }}
 

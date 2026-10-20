@@ -2,7 +2,11 @@
 # Smoke test of a test image built by image/build.sh: the role must find the
 # RTPEngine binaries in the image, skip the build, and only configure.
 #
-# MOLECULE_IMAGE=ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404 uv run molecule test -s image
+# The scenario tests ghcr.io/miarec/rtpengine:<version>-<distro>, from
+# MOLECULE_RTPENGINE_VERSION and MOLECULE_DISTRO. If no local image has that
+# tag, Docker pulls the published one.
+#
+# MOLECULE_RTPENGINE_VERSION=12.5.1.5 MOLECULE_DISTRO=ubuntu2404 uv run molecule test -s image
 
 # Don't symlink the role into ~/.ansible/roles. The converge loads the role by
 # path, and the symlink step fails when scenarios run in parallel.
@@ -13,7 +17,7 @@ driver:
   name: docker
 platforms:
   - name: rtpengine-image-${MOLECULE_DISTRO:-ubuntu2404}
-    image: ${MOLECULE_IMAGE:-ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404}
+    image: ghcr.io/miarec/rtpengine:${MOLECULE_RTPENGINE_VERSION:-12.5.1.5}-${MOLECULE_DISTRO:-ubuntu2404}
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
