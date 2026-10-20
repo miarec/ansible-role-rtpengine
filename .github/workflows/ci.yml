@@ -10,6 +10,9 @@ name: Ansible role testing
   schedule:
     - cron: "30 7 1 * *"
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: lint
