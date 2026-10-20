@@ -1,6 +1,7 @@
 ---
 exclude_paths:
-  - molecule/
+  - .venv/
+  - .ansible/
 
 skip_list:
   - fqcn

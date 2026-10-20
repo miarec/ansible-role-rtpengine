@@ -13,18 +13,21 @@ name: Ansible role testing
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
 
       - name: Run ansible-lint
-        uses: ansible/ansible-lint-action@v6
+        run: uv run ansible-lint
 
   test:
-    name: molecule
-    runs-on: ubuntu-latest
+    name: molecule (${{ matrix.distro }})
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -33,19 +36,14 @@ jobs:
           - ubuntu2404
 
     steps:
-      - name: Check out the Repository
-        uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v7
 
-      - name: Set up Python3
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install test dependencies
-        run: pip3 install -r molecule/default/test-requirements.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
 
       - name: Run molecule test
-        run: molecule test
+        run: uv run molecule test
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
