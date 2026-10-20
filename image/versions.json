@@ -1,0 +1,4 @@
+{
+  "rtpengine_versions": ["12.5.1.5"],
+  "distros": ["ubuntu2204", "ubuntu2404"]
+}
