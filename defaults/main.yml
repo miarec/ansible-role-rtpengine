@@ -80,3 +80,15 @@ rtpengine_min_port: 35000
 # Default is 65000.
 # This is an equivalent of command line argument "-M max_port"
 rtpengine_max_port: 65000
+
+# Call timeouts, in seconds. Leave a variable empty to keep RTPEngine's own
+# default. See https://rtpengine.readthedocs.io/en/latest/rtpengine.html
+# Same as `--timeout`: delete a call when no RTP arrives for this long on a
+# stream whose endpoint sends media. RTPEngine's default is 60.
+rtpengine_timeout:
+# Same as `--silent-timeout`: the same limit for a stream whose endpoint
+# doesn't send media, such as a call on hold. RTPEngine's default is 3600.
+rtpengine_silent_timeout:
+# Same as `--final-timeout`: delete a call this long after it started, with or
+# without RTP. RTPEngine has no such limit by default.
+rtpengine_final_timeout:

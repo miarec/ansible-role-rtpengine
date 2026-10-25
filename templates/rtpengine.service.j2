@@ -25,6 +25,15 @@ ExecStart={{ rtpengine_install_dir }}/usr/bin/rtpengine \
     --log-level={{ rtpengine_log_level }} \
     --log-facility={{ rtpengine_syslog_facility }} \
     --tos={{ rtpengine_tos }} \
+{% if rtpengine_timeout %}
+    --timeout={{ rtpengine_timeout }} \
+{% endif %}
+{% if rtpengine_silent_timeout %}
+    --silent-timeout={{ rtpengine_silent_timeout }} \
+{% endif %}
+{% if rtpengine_final_timeout %}
+    --final-timeout={{ rtpengine_final_timeout }} \
+{% endif %}
     {{ "--nftables-chain=" + rtpengine_nft_table if rtpengine_use_kernel_module and rtpengine_nft_table else "" }}{{ "--config-file=" + rtpengine_config_file if rtpengine_config_file else "" }}
 
 

@@ -40,3 +40,12 @@ def test_socket(host):
     for socket in sockets:
         s = host.socket(socket)
         assert s.is_listening
+
+def test_timeouts(host):
+    # converge.yml sets the timeout variables to values that differ from
+    # RTPEngine's defaults.
+    args = host.process.get(comm="rtpengine").args.split()
+
+    assert "--timeout=61" in args
+    assert "--silent-timeout=3601" in args
+    assert "--final-timeout=7201" in args

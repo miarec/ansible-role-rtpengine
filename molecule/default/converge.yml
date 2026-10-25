@@ -30,5 +30,9 @@
 
   roles:
     - role: "{{ playbook_dir }}/../.."  # noqa: role-name[path]
+      vars:
+        rtpengine_timeout: 61
+        rtpengine_silent_timeout: 3601
+        rtpengine_final_timeout: 7201
       tags:
         - rtpengine
