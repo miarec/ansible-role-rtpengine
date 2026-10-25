@@ -39,6 +39,14 @@ For a full list of variables, see [defaults/main.yml](./defaults/main.yml)
  - `rtpengine_min_port`: Lower limit on UDP ports range that the rtpengine uses for RTP/RTCP sessions
  - `rtpengine_max_port`: Upper limit on UDP ports range that the rtpengine uses for RTP/RTCP sessions
 
+## Call timeouts
+
+Each variable is in seconds. When a variable is empty (the default), the role doesn't pass the option, and RTPEngine uses its own default.
+
+ - `rtpengine_timeout`: same as `--timeout`. RTPEngine deletes a call when no RTP arrives for this long on a stream whose endpoint sends media. RTPEngine's default is 60.
+ - `rtpengine_silent_timeout`: same as `--silent-timeout`. The same limit for a stream whose endpoint doesn't send media, such as a call on hold. RTPEngine's default is 3600.
+ - `rtpengine_final_timeout`: same as `--final-timeout`. RTPEngine deletes a call this long after the call started, whether RTP arrives or not. By default, RTPEngine has no such limit.
+
 ## Logging
 
 - `rtpengine_log_dir`: directory for log files, default = `/var/log/rtpengine`
