@@ -8,6 +8,13 @@ Documentation=https://www.rtpengine.org
 [Service]
 Type=simple
 PIDFile={{ rtpengine_pid_file }}
+{% if rtpengine_pid_dir.startswith('/run/') %}
+# /run is empty after each boot, and RTPEngine refuses to start without the
+# folder of its PID file ("Failed to create PID file"): systemd creates it at
+# each start, owned by User=.
+RuntimeDirectory={{ rtpengine_pid_dir[5:] }}
+RuntimeDirectoryMode=0755
+{% endif %}
 
 Restart=always
 RestartSec=5s
