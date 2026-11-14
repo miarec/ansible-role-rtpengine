@@ -13,7 +13,7 @@ name: Test images
     inputs:
       rtpengine_version:
         description: >-
-          RTPEngine version to build, for example 12.5.1.5. Leave empty to build
+          RTPEngine version to build, for example 26.0.1.28. Leave empty to build
           the versions in image/versions.json.
         required: false
         default: ''
@@ -49,7 +49,7 @@ jobs:
         run: |
           if [[ -n "$INPUT_VERSION" ]]; then
             if [[ ! "$INPUT_VERSION" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
-              echo "::error::rtpengine_version must look like 12.5.1.5, got '$INPUT_VERSION'"
+              echo "::error::rtpengine_version must look like 26.0.1.28, got '$INPUT_VERSION'"
               exit 1
             fi
             versions=$(jq -cn --arg v "$INPUT_VERSION" '[$v]')

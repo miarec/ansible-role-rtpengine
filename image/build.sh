@@ -8,7 +8,7 @@
 # unconfigured RTPEngine.
 #
 # Usage: image/build.sh <rtpengine-version> <distro> <image-tag>
-# Example: image/build.sh 12.5.1.5 ubuntu2404 ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404
+# Example: image/build.sh 26.0.1.28 ubuntu2404 ghcr.io/miarec/rtpengine:26.0.1.28-ubuntu2404
 set -euo pipefail
 
 if [[ $# -ne 3 ]]; then
