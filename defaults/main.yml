@@ -3,7 +3,7 @@ rtpengine_user: rtpengine
 rtpengine_group: "{{ rtpengine_user }}"
 
 # https://github.com/sipwise/rtpengine/tags
-rtpengine_version: 12.5.1.5
+rtpengine_version: 26.0.1.28
 
 rtpengine_latest_release_url: "https://api.github.com/repos/sipwise/rtpengine/releases/latest"
 rtpengine_download_base_url: "https://github.com/sipwise/rtpengine/archive"

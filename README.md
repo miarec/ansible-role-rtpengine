@@ -10,7 +10,8 @@ The role builds RTPEngine from source and installs it into `rtpengine_install_di
 already exists, the role skips the build and only configures RTPEngine. To build
 again, set `rtpengine_force_install: true`.
 
-Supported platforms: Ubuntu 22.04 (jammy) and Ubuntu 24.04 (noble).
+Supported platforms: Ubuntu 22.04 (jammy), Ubuntu 24.04 (noble), and Ubuntu 26.04
+(resolute).
 
 # Dependencies
 
@@ -154,11 +155,11 @@ playbook repository.
 
 Molecule variables:
 
-| Variable                     | Default      | Description                                  |
-|------------------------------|--------------|----------------------------------------------|
-| `MOLECULE_DISTRO`            | `ubuntu2404` | Container OS: `ubuntu2204` or `ubuntu2404`   |
-| `MOLECULE_RTPENGINE_VERSION` | `12.5.1.5`   | Value of `rtpengine_version`                 |
-| `MOLECULE_ANSIBLE_VERBOSITY` | `0`          | Ansible verbosity, 0-3 (same as `-v`-`-vvv`) |
+| Variable                     | Default      | Description                                                |
+|------------------------------|--------------|------------------------------------------------------------|
+| `MOLECULE_DISTRO`            | `ubuntu2404` | Container OS: `ubuntu2204`, `ubuntu2404`, or `ubuntu2604`  |
+| `MOLECULE_RTPENGINE_VERSION` | `26.0.1.28`   | Value of `rtpengine_version`                               |
+| `MOLECULE_ANSIBLE_VERBOSITY` | `0`          | Ansible verbosity, 0-3 (same as `-v`-`-vvv`)               |
 
 # Test images
 
@@ -169,10 +170,10 @@ role's install tasks:
 ghcr.io/miarec/rtpengine:<rtpengine version>-<distribution>
 ```
 
-For example, `ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404`. Each image is
+For example, `ghcr.io/miarec/rtpengine:26.0.1.28-ubuntu2404`. Each image is
 multi-arch (`linux/amd64` and `linux/arm64`) and starts from
 `ghcr.io/miarec/<distribution>-systemd`. The per-architecture tags (for example
-`12.5.1.5-ubuntu2404-arm64`) are intermediate build results.
+`26.0.1.28-ubuntu2404-arm64`) are intermediate build results.
 
 Use the images in tests of playbooks that use this role. When the role runs against
 a container from the image, it finds `/opt/rtpengine/usr/bin/rtpengine`, skips the
@@ -182,7 +183,7 @@ the systemd base image, for example in Molecule:
 ```yaml
 platforms:
   - name: rtpengine
-    image: ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404
+    image: ghcr.io/miarec/rtpengine:26.0.1.28-ubuntu2404
     command: ""
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
@@ -234,6 +235,6 @@ another RTPEngine version, or if the service does not start. If no local image h
 the tag, Docker pulls the published image.
 
 ```bash
-image/build.sh 12.5.1.5 ubuntu2404 ghcr.io/miarec/rtpengine:12.5.1.5-ubuntu2404
-MOLECULE_RTPENGINE_VERSION=12.5.1.5 MOLECULE_DISTRO=ubuntu2404 uv run molecule test -s image
+image/build.sh 26.0.1.28 ubuntu2404 ghcr.io/miarec/rtpengine:26.0.1.28-ubuntu2404
+MOLECULE_RTPENGINE_VERSION=26.0.1.28 MOLECULE_DISTRO=ubuntu2404 uv run molecule test -s image
 ```
