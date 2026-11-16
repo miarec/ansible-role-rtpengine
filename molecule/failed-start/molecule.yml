@@ -1,0 +1,35 @@
+---
+# Checks that RTPEngine's log reaches its log file after a first run of the
+# role fails before the play's handlers run (issue #7). The prepare playbook
+# runs the role and then fails, the converge playbook runs the role again, and
+# the verify playbook sends a log line to RTPEngine's syslog facility.
+#
+# The scenario uses the RTPEngine test image, so the role doesn't build
+# RTPEngine.
+
+# Don't symlink the role into ~/.ansible/roles. The playbooks load the role by
+# path, and the symlink step fails when scenarios run in parallel.
+prerun: false
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: rtpengine-failed-start-${MOLECULE_DISTRO:-ubuntu2404}
+    image: ghcr.io/miarec/rtpengine:${MOLECULE_RTPENGINE_VERSION:-26.0.1.28}-${MOLECULE_DISTRO:-ubuntu2404}
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+    keep_volumes: false
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_VERBOSITY: ${MOLECULE_ANSIBLE_VERBOSITY:-0}
+    RTPENGINE_VERSION: ${MOLECULE_RTPENGINE_VERSION:-26.0.1.28}
+
+verifier:
+  name: ansible

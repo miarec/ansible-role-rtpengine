@@ -1,0 +1,4 @@
+---
+# The next run of the role, which succeeds.
+- name: Converge
+  ansible.builtin.import_playbook: ../default/converge.yml

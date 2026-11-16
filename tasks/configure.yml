@@ -24,8 +24,18 @@
     owner: "root"
     group: "root"
     mode: "0644"
-  notify:
-    - restart rsyslog
+  register: _rtpengine_rsyslog_conf
+
+# Restart rsyslog here, not in a handler. A run that fails later, for example
+# when RTPEngine doesn't start, doesn't run the notified handlers, and the next
+# run finds the rule unchanged. rsyslog then never loads the rule, and drops
+# RTPEngine's log. flush_handlers doesn't help: it also runs "restart
+# rtpengine", which the install tasks notify before the service exists.
+- name: Restart rsyslog to load the rtpengine rule    # noqa no-handler
+  service:
+    name: rsyslog
+    state: restarted
+  when: _rtpengine_rsyslog_conf is changed
 
 - name: Configure rtpengine logrotate
   template:

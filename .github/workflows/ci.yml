@@ -29,11 +29,14 @@ jobs:
         run: uv run ansible-lint
 
   test:
-    name: molecule (${{ matrix.distro }})
+    name: molecule (${{ matrix.scenario }}, ${{ matrix.distro }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
+        scenario:
+          - default
+          - failed-start
         distro:
           - ubuntu2204
           - ubuntu2404
@@ -47,8 +50,9 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.0
 
       - name: Run molecule test
-        run: uv run molecule test
+        run: uv run molecule test --scenario-name "$SCENARIO"
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
           MOLECULE_DISTRO: ${{ matrix.distro }}
+          SCENARIO: ${{ matrix.scenario }}
