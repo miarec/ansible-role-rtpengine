@@ -1,0 +1,42 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  vars:
+    log_file: /var/log/rtpengine/rtpengine.log
+
+  tasks:
+    # set_fact evaluates now() once, so logger and grep use the same line.
+    - name: Make a unique log line
+      set_fact:
+        log_line: "molecule failed-start check {{ now(utc=true).strftime('%Y%m%d%H%M%S%f') }}"
+
+    - name: Read the service states
+      service_facts:
+
+    - name: Check that RTPEngine is running
+      assert:
+        that:
+          - ansible_facts['services']['rtpengine.service']['state'] == 'running'
+
+    - name: Send a log line to RTPEngine's syslog facility
+      command: logger --priority local5.info --tag rtpengine "{{ log_line }}"
+      changed_when: false
+
+    - name: Check that the log line reaches RTPEngine's log file
+      command: grep --fixed-strings --quiet "{{ log_line }}" "{{ log_file }}"
+      register: _log_line_found
+      until: _log_line_found.rc == 0
+      retries: 10
+      delay: 1
+      changed_when: false
+      failed_when: false
+
+    - name: Report a log line that rsyslog didn't write
+      assert:
+        that:
+          - _log_line_found.rc == 0
+        fail_msg: >-
+          rsyslog didn't write the line to {{ log_file }}. It probably didn't
+          load the rule in /etc/rsyslog.d/rtpengine.conf.

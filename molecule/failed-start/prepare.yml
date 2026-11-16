@@ -1,0 +1,45 @@
+---
+# The first run of the role: it writes the rsyslog rule, and then a later task
+# of the play fails, for example in the next role. The unit is Type=simple, so
+# "systemctl start" succeeds even when RTPEngine can't start, and the play
+# fails in a later task instead.
+- name: Run the role, and then fail the play
+  hosts: all
+  become: true
+
+  tasks:
+    # The test image contains the rule, and rsyslog loads it at boot. Remove
+    # it, so that the host is like a new one and the role writes the rule.
+    - name: Remove the rsyslog rule of the test image
+      file:
+        path: /etc/rsyslog.d/rtpengine.conf
+        state: absent
+
+    - name: Restart rsyslog without the rule
+      service:
+        name: rsyslog
+        state: restarted
+
+    - name: Run the role and fail the play after it
+      block:
+        - name: Run the rtpengine role
+          include_role:
+            name: "{{ playbook_dir }}/../.." # noqa: role-name[path]
+          vars:
+            rtpengine_version: "{{ lookup('env', 'RTPENGINE_VERSION') }}"
+
+        - name: Fail like a later task of the play
+          fail:
+            msg: A later task of the play failed
+
+      rescue:
+        - name: Check that the play failed after the role
+          assert:
+            that:
+              - ansible_failed_task.name == 'Fail like a later task of the play'
+            fail_msg: "The role failed in task: {{ ansible_failed_task.name }}"
+
+        # A failed run doesn't run the notified handlers. End the play for the
+        # host without running them, as a failed run does.
+        - name: End the run without running the notified handlers
+          meta: end_host
