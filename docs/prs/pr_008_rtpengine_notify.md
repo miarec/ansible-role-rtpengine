@@ -42,6 +42,33 @@ RTPEngine ran itself in the background. When the process that systemd started ex
 
 ---
 
+## 🧪 How the fix was proved
+
+All runs used one container from `ghcr.io/miarec/rtpengine:26.0.1.28-ubuntu2604` (systemd 259.9), with systemd's debug log on. The same container ran the unit from `master` first, and then the fixed unit.
+
+**Forced race.** The method comes from #6. `strace` attaches to the process that systemd starts and delays the child's `setpgid()` by 20 ms, which makes the child lose the race on every start. A 3% CPU quota on the unit gives `strace` time to attach.
+
+| Two starts each | `master` | This PR |
+| --- | --- | --- |
+| systemd's log | "Can't open PID file … after running", "Changed running -> stop", `ExecStop` runs | "Got notification message: READY=1" |
+| RTPEngine | "Startup complete", then "shutting down", then a restart 5 s later | Keeps running, and `MainPID` is RTPEngine itself |
+| `strace` | A fork with `SIGCHLD`, the parent's `exit_group(0)`, and the delayed `setpgid()` | No fork, so there's no race to delay |
+
+**Without the forced delay.** 100 `systemctl restart` runs, 1 s apart, under a 3% CPU quota:
+
+| | `master` | This PR |
+| --- | --- | --- |
+| Times systemd found the PID file missing or empty | 20 | 0 (no PID file) |
+| Stops where `pkill` failed | 67 | 0 |
+| Stops that ended in SIGKILL after the 10 s timeout | 52 | 0 |
+| Clean starts (`READY=1`) and clean stops (SIGTERM) | No | 100 of 100 |
+
+Under a 5% quota, the `master` unit also lost one start in 40 restarts, with the same log lines as in #6.
+
+**Regression test.** A new testinfra test checks that the unit is `Type=notify`, has no PID file, and has `NRestarts=0`, and that systemd's `MainPID` is the `rtpengine --foreground` process.
+
+---
+
 ## 📌 Related issues
 
 Closes #6
