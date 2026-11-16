@@ -43,14 +43,6 @@
     dest: "/etc/logrotate.d/{{ rtpengine_service_name }}"
     mode: "0644"
 
-- name: Create rtpengine PID directory.
-  file:
-    path: "{{ rtpengine_pid_dir }}"
-    state: directory
-    owner: "{{ rtpengine_user }}"
-    group: "{{ rtpengine_group }}"
-    mode: "0755"
-
 - name: Create rtpengine SystemD service
   template:
     src: rtpengine.service.j2

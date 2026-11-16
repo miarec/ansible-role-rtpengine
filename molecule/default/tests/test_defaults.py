@@ -33,6 +33,21 @@ def test_service(host):
     assert s.is_running
 
 
+def test_service_runs_in_foreground(host):
+    # RTPEngine must not fork: systemd's main process is RTPEngine itself, and
+    # it reports READY=1. See issue #6.
+    show = host.check_output(
+        "systemctl show rtpengine -p Type -p MainPID -p NRestarts -p PIDFile")
+    props = dict(line.split("=", 1) for line in show.splitlines())
+    process = host.process.get(comm="rtpengine")
+
+    assert props["Type"] == "notify"
+    assert props["PIDFile"] == ""
+    assert props["NRestarts"] == "0"
+    assert int(props["MainPID"]) == process.pid
+    assert "--foreground" in process.args.split()
+
+
 def test_socket(host):
     sockets = [
         "udp://127.0.0.1:2223"
