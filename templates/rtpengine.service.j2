@@ -6,15 +6,13 @@ After=network.target
 Documentation=https://www.rtpengine.org
 
 [Service]
-Type=simple
-PIDFile={{ rtpengine_pid_file }}
-{% if rtpengine_pid_dir.startswith('/run/') %}
-# /run is empty after each boot, and RTPEngine refuses to start without the
-# folder of its PID file ("Failed to create PID file"): systemd creates it at
-# each start, owned by User=.
-RuntimeDirectory={{ rtpengine_pid_dir[5:] }}
-RuntimeDirectoryMode=0755
-{% endif %}
+# RTPEngine runs in the foreground (--foreground), so the process that systemd
+# starts is the service, and it reports READY=1 when it accepts ng commands.
+# systemd needs no PID file, and stops RTPEngine with SIGTERM.
+# Without --foreground, RTPEngine forks, and its parent can exit before the
+# child writes the PID file: systemd then stops the new RTPEngine right after
+# its startup.
+Type=notify
 
 Restart=always
 RestartSec=5s
@@ -25,10 +23,10 @@ User={{ rtpengine_user }}
 Group={{ rtpengine_group }}
 
 ExecStart={{ rtpengine_install_dir }}/usr/bin/rtpengine \
+    --foreground \
     --listen-{{ rtpengine_ctrl_protocol }}={{ rtpengine_addr }}:{{ rtpengine_ctrl_port }} \
     --interface={{ rtpengine_addr }}{{ "!" + rtpengine_advaddr if rtpengine_advaddr else "" }} \
     --port-min={{ rtpengine_min_port }} --port-max={{ rtpengine_max_port }} \
-    --pidfile={{ rtpengine_pid_file }} \
     --log-level={{ rtpengine_log_level }} \
     --log-facility={{ rtpengine_syslog_facility }} \
     --tos={{ rtpengine_tos }} \
@@ -43,9 +41,6 @@ ExecStart={{ rtpengine_install_dir }}/usr/bin/rtpengine \
 {% endif %}
     {{ "--nftables-chain=" + rtpengine_nft_table if rtpengine_use_kernel_module and rtpengine_nft_table else "" }}{{ "--config-file=" + rtpengine_config_file if rtpengine_config_file else "" }}
 
-
-
-ExecStop=/usr/bin/pkill -F {{ rtpengine_pid_file }}
 
 TimeoutStartSec=10
 TimeoutStopSec=10

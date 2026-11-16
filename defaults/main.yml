@@ -65,12 +65,6 @@ rtpengine_advaddr:
 # specifies the TOS value for outgoing packets. same as `--tos`
 rtpengine_tos: 184
 
-# This parameter configures the name of the file where PID of running rtpengine will be stored.
-# Default is /var/run/rtpengine.pid.
-# This is an equivalent of command line argument "-p pid_file"
-rtpengine_pid_dir: /run/rtpengine
-rtpengine_pid_file: "{{  rtpengine_pid_dir }}/rtpengine.pid"
-
 # Set lower limit on UDP ports range that the rtpengine uses for RTP/RTCP sessions to min_port.
 # Default is 35000.
 # This is an equivalent of command line argument "-m min_port"
